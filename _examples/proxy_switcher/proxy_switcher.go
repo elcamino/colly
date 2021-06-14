@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"log"
 
-	"github.com/gocolly/colly/v2"
-	"github.com/gocolly/colly/v2/proxy"
+	"github.com/elcamino/colly/v2"
+	"github.com/elcamino/colly/v2/proxy"
 )
 
 func main() {

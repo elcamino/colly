@@ -31,7 +31,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 
-	"github.com/gocolly/colly/v2/debug"
+	"github.com/elcamino/colly/v2/debug"
 )
 
 var serverIndexResponse = []byte("hello world\n")
@@ -465,6 +465,12 @@ func TestCollectorVisitWithDisallowedDomains(t *testing.T) {
 	err = c2.Visit(ts.URL)
 	if err != nil {
 		t.Errorf("Failed to visit url %s", ts.URL)
+	}
+
+	c3 := NewCollector(DisallowedDomains("scraperwall.com"), IgnoreAllowedDomainsForAssets())
+	err = c3.Visit("https://scraperwall.com/pdf/scraperwall-ix-bad-bots.pdf")
+	if err != nil {
+		t.Errorf("c.Visit should ignore DisallowedDomains for assets and PDFs but returned %s", err)
 	}
 }
 
@@ -982,7 +988,7 @@ func TestEnvSettings(t *testing.T) {
 func TestUserAgent(t *testing.T) {
 	const exampleUserAgent1 = "Example/1.0"
 	const exampleUserAgent2 = "Example/2.0"
-	const defaultUserAgent = "colly - https://github.com/gocolly/colly/v2"
+	const defaultUserAgent = "colly - https://github.com/elcamino/colly/v2"
 
 	ts := newTestServer()
 	defer ts.Close()

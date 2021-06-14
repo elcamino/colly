@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/gocolly/colly/v2"
+	"github.com/elcamino/colly/v2"
 )
 
 func main() {

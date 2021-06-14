@@ -41,8 +41,8 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/antchfx/htmlquery"
 	"github.com/antchfx/xmlquery"
-	"github.com/gocolly/colly/v2/debug"
-	"github.com/gocolly/colly/v2/storage"
+	"github.com/elcamino/colly/v2/debug"
+	"github.com/elcamino/colly/v2/storage"
 	"github.com/kennygrant/sanitize"
 	"github.com/temoto/robotstxt"
 	"google.golang.org/appengine/urlfetch"
@@ -61,6 +61,9 @@ type Collector struct {
 	// AllowedDomains is a domain whitelist.
 	// Leave it blank to allow any domains to be visited
 	AllowedDomains []string
+	// IgnoreAllowedDomainsForAssets, if set allows the collector to visit assets from
+	// domains other than the allowed domain
+	IgnoreAllowedDomains *regexp.Regexp
 	// DisallowedDomains is a domain blacklist.
 	DisallowedDomains []string
 	// DisallowedURLFilters is a list of regular expressions which restricts
@@ -294,6 +297,12 @@ func AllowedDomains(domains ...string) CollectorOption {
 	}
 }
 
+func IgnoreAllowedDomainsForAssets() CollectorOption {
+	return func(c *Collector) {
+		c.IgnoreAllowedDomains = regexp.MustCompile(`\.(docx?|odt|pdf|jpe?g|gif|png|tiff|webp)`)
+	}
+}
+
 // ParseHTTPErrorResponse allows parsing responses with HTTP errors
 func ParseHTTPErrorResponse() CollectorOption {
 	return func(c *Collector) {
@@ -409,7 +418,7 @@ func CheckHead() CollectorOption {
 // Init initializes the Collector's private variables and sets default
 // configuration for the Collector
 func (c *Collector) Init() {
-	c.UserAgent = "colly - https://github.com/gocolly/colly/v2"
+	c.UserAgent = "colly - https://github.com/elcamino/colly/v2"
 	c.MaxDepth = 0
 	c.store = &storage.InMemoryStorage{}
 	c.store.Init()
@@ -724,7 +733,9 @@ func (c *Collector) requestCheck(u string, parsedURL *url.URL, method string, re
 		}
 	}
 	if !c.isDomainAllowed(parsedURL.Hostname()) {
-		return ErrForbiddenDomain
+		if c.IgnoreAllowedDomains == nil || !c.IgnoreAllowedDomains.MatchString(parsedURL.Path) {
+			return ErrForbiddenDomain
+		}
 	}
 	if method != "HEAD" && !c.IgnoreRobotsTxt {
 		if err := c.checkRobots(parsedURL); err != nil {
